@@ -583,6 +583,79 @@ function buildQuestionPool() {
     });
   }
 
+  // Cociente de bases iguales (8 preguntas)
+  for (let i = 0; i < 8; i++) {
+    const a = randomInt(2, 5);
+    const n = randomInt(3, 6);
+    const m = randomInt(1, n - 1);
+    const correct = Math.pow(a, n - m);
+    pool.push({
+      tex: `\\frac{${a}^{${n}}}{${a}^{${m}}} = \\,?`,
+      correct,
+      explanation: `Bases iguales en división: se RESTAN los exponentes. \\frac{${a}^{${n}}}{${a}^{${m}}} = ${a}^{${n}-${m}} = ${a}^{${n - m}} = ${correct}.`,
+      generateOptions: () => {
+        const opts = new Set([correct, Math.pow(a, n + m), Math.pow(a, n) - Math.pow(a, m)]);
+        while (opts.size < 4) opts.add(Math.pow(a, randomInt(1, 6)));
+        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
+      },
+    });
+  }
+
+  // Raíz de una raíz (7 preguntas)
+  for (let i = 0; i < 7; i++) {
+    const base = randomInt(2, 3);
+    const n = 2;
+    const m = randomInt(2, 3);
+    const a = Math.pow(base, n * m);
+    pool.push({
+      tex: `\\sqrt[${n}]{\\sqrt[${m}]{${a}}} = \\,?`,
+      correct: base,
+      explanation: `Raíz de raíz: los índices se MULTIPLICAN. \\sqrt[${n}]{\\sqrt[${m}]{${a}}} = \\sqrt[${n * m}]{${a}} = ${base}, porque ${base}^{${n * m}} = ${a}.`,
+      generateOptions: () => {
+        const opts = new Set([base, base + 1, Math.max(1, base - 1), base * 2]);
+        while (opts.size < 4) opts.add(randomInt(1, 8));
+        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
+      },
+    });
+  }
+
+  // Potencia de un producto (7 preguntas)
+  for (let i = 0; i < 7; i++) {
+    const a = randomInt(2, 5);
+    const b = randomInt(2, 5);
+    const n = randomInt(2, 3);
+    const correct = Math.pow(a * b, n);
+    pool.push({
+      tex: `(${a} \\cdot ${b})^{${n}} = \\,?`,
+      correct,
+      explanation: `La potencia se reparte entre los factores: (${a} \\cdot ${b})^{${n}} = ${a}^{${n}} \\cdot ${b}^{${n}} = ${Math.pow(a, n)} \\cdot ${Math.pow(b, n)} = ${correct}.`,
+      generateOptions: () => {
+        const opts = new Set([correct, Math.pow(a, n) + Math.pow(b, n), a * b * n, (a + b) * n]);
+        while (opts.size < 4) opts.add(Math.pow(a * b, randomInt(1, 3)));
+        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
+      },
+    });
+  }
+
+  // Raíz como potencia fraccionaria (8 preguntas)
+  for (let i = 0; i < 8; i++) {
+    const base = randomInt(2, 3);
+    const n = randomInt(2, 3);
+    const m = randomInt(2, 3);
+    const a = Math.pow(base, n);
+    const correct = Math.pow(base, m);
+    pool.push({
+      tex: `\\sqrt[${n}]{${a}^{${m}}} = \\,?`,
+      correct,
+      explanation: `Raíz como potencia fraccionaria: \\sqrt[${n}]{${a}^{${m}}} = ${a}^{\\frac{${m}}{${n}}}. Como ${a} = ${base}^{${n}}, queda ${base}^{${m}} = ${correct}.`,
+      generateOptions: () => {
+        const opts = new Set([correct, Math.pow(base, n + m), a * m, Math.pow(base, Math.abs(m - n) || 1)]);
+        while (opts.size < 4) opts.add(Math.pow(base, randomInt(1, 5)));
+        return shuffleArray([...opts].filter(x => x > 0 && Number.isFinite(x)).slice(0, 4));
+      },
+    });
+  }
+
   return pool;
 }
 
