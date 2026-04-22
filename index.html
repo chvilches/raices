@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFB" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -35,6 +37,7 @@
         <div class="mode-switch">
           <button class="mode-btn active" data-mode="secuencial">Secuencial</button>
           <button class="mode-btn" data-mode="aleatorio">Aleatorio</button>
+          <button class="mode-btn" data-mode="repaso">Repaso</button>
         </div>
         <div class="progress-wrap">
           <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
@@ -106,6 +109,8 @@
         <div class="quiz-question" id="quiz-question"></div>
         <div class="quiz-options" id="quiz-options"></div>
         <div class="quiz-feedback" id="quiz-feedback"></div>
+        <div class="quiz-explanation" id="quiz-explanation" hidden></div>
+        <button class="btn btn-primary quiz-next" id="quiz-next" hidden>Siguiente →</button>
       </div>
 
       <div id="quiz-end" class="quiz-end" hidden>
@@ -114,6 +119,7 @@
           <h3 id="quiz-end-title">¡Terminaste!</h3>
           <p class="quiz-score"><span id="quiz-final-score">0</span> / 10</p>
           <p class="quiz-msg" id="quiz-end-msg"></p>
+          <div class="quiz-history" id="quiz-history"></div>
           <button class="btn btn-primary" id="quiz-restart">Jugar de nuevo</button>
         </div>
       </div>
