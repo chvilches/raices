@@ -688,7 +688,23 @@ main {
   color: var(--ink);
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.quiz-option-latex {
+  font-family: var(--font);
+  padding: 1rem 0.9rem;
+  overflow-x: auto;
+}
+
+.quiz-option-latex .katex-display { margin: 0 !important; }
+.quiz-option-latex .katex { font-size: 1.1em; color: var(--ink); }
+
+.quiz-option.correct .katex,
+.quiz-option.wrong .katex { color: white !important; }
 
 .quiz-option:hover:not(:disabled) {
   border-color: var(--lavender-deep);

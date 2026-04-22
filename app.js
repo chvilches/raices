@@ -509,150 +509,216 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Helper para preguntas tipo propiedad: mezcla correcto + 3 distractores
+function propOptions(correctTex, wrongTexs) {
+  return () => shuffleArray([
+    { tex: correctTex, isCorrect: true },
+    ...wrongTexs.map(t => ({ tex: t, isCorrect: false })),
+  ]);
+}
+
+// Helper para preguntas numéricas: garantiza 4 opciones únicas (correct + 3 distractores)
+function numericOptions(correct, rawDistractors) {
+  const seen = new Set([correct]);
+  const picked = [];
+  for (const d of rawDistractors) {
+    if (!seen.has(d) && Number.isFinite(d)) {
+      seen.add(d);
+      picked.push(d);
+      if (picked.length === 3) break;
+    }
+  }
+  // Fallback: offsets around correct si no alcanzan distractores únicos
+  let off = 1;
+  while (picked.length < 3 && off < 50) {
+    for (const v of [correct + off, correct - off]) {
+      if (picked.length < 3 && v > 0 && !seen.has(v)) {
+        seen.add(v);
+        picked.push(v);
+      }
+    }
+    off++;
+  }
+  const all = [correct, ...picked];
+  return () => shuffleArray(all).map(v => ({
+    label: String(v),
+    isCorrect: v === correct,
+  }));
+}
+
 function buildQuestionPool() {
   const pool = [];
 
-  // Raíces cuadradas directas
+  // ===== NUMERIC: raíces cuadradas directas (memoria) =====
   for (let i = 1; i <= 20; i++) {
     const n2 = i * i;
+    const distractors = new Set();
+    while (distractors.size < 3) {
+      const v = randomInt(Math.max(1, i - 5), i + 5);
+      if (v !== i) distractors.add(v);
+    }
     pool.push({
+      type: 'numeric',
       tex: `\\sqrt{${n2}} = \\,?`,
-      correct: i,
       explanation: `Porque ${i} \\times ${i} = ${n2}, entonces \\sqrt{${n2}} = ${i}.`,
-      generateOptions: () => {
-        const opts = new Set([i]);
-        while (opts.size < 4) opts.add(randomInt(Math.max(1, i - 5), i + 5));
-        return shuffleArray([...opts]);
-      },
+      generateOptions: numericOptions(i, [...distractors]),
     });
   }
 
-  // Producto de bases iguales
-  for (let i = 0; i < 6; i++) {
-    const a = randomInt(2, 5);
-    const n = randomInt(1, 4);
-    const m = randomInt(1, 4);
-    const correct = Math.pow(a, n + m);
-    pool.push({
-      tex: `${a}^{${n}} \\cdot ${a}^{${m}} = \\,?`,
-      correct,
-      explanation: `Bases iguales, se SUMAN los exponentes: ${a}^{${n}} \\cdot ${a}^{${m}} = ${a}^{${n}+${m}} = ${a}^{${n + m}} = ${correct}.`,
-      generateOptions: () => {
-        const opts = new Set([correct, Math.pow(a, n * m), Math.pow(a, n) + Math.pow(a, m)]);
-        while (opts.size < 4) opts.add(Math.pow(a, randomInt(1, 7)));
-        return shuffleArray([...opts].slice(0, 4));
-      },
-    });
-  }
-
-  // Raíz de un producto
+  // ===== NUMERIC: cálculos simples con raíces de cuadrados perfectos =====
   const perfs = [4, 9, 16, 25, 36, 49, 64, 81, 100];
   for (let i = 0; i < 4; i++) {
     const a = perfs[randomInt(0, perfs.length - 1)];
     const b = perfs[randomInt(0, perfs.length - 1)];
     const sa = Math.sqrt(a);
     const sb = Math.sqrt(b);
-    const correct = sa * sb;
+    const result = sa * sb;
     pool.push({
-      tex: `\\sqrt{${a} \\cdot ${b}} = \\,?`,
-      correct,
-      explanation: `La raíz del producto es el producto de las raíces: \\sqrt{${a}} \\cdot \\sqrt{${b}} = ${sa} \\cdot ${sb} = ${correct}.`,
-      generateOptions: () => {
-        const opts = new Set([correct, sa + sb, sa * 2, sb * 2]);
-        while (opts.size < 4) opts.add(Math.max(1, correct + randomInt(-10, 10)));
-        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
-      },
+      type: 'numeric',
+      tex: `\\sqrt{${a}} \\cdot \\sqrt{${b}} = \\,?`,
+      explanation: `\\sqrt{${a}} = ${sa} y \\sqrt{${b}} = ${sb}, entonces ${sa} \\cdot ${sb} = ${result}.`,
+      generateOptions: numericOptions(result, [sa + sb, sa * 2, sb * 2, Math.max(1, result + 3)]),
     });
   }
 
-  // Potencia de potencia
-  for (let i = 0; i < 4; i++) {
-    const a = randomInt(2, 4);
-    const n = randomInt(2, 3);
-    const m = randomInt(2, 3);
-    const correct = Math.pow(a, n * m);
-    pool.push({
-      tex: `(${a}^{${n}})^{${m}} = \\,?`,
-      correct,
-      explanation: `Potencia de potencia: los exponentes se MULTIPLICAN. ${a}^{${n} \\cdot ${m}} = ${a}^{${n * m}} = ${correct}.`,
-      generateOptions: () => {
-        const opts = new Set([correct, Math.pow(a, n + m), Math.pow(a, n) * m]);
-        while (opts.size < 4) opts.add(Math.pow(a, randomInt(2, 6)));
-        return shuffleArray([...opts].slice(0, 4));
-      },
-    });
-  }
-
-  // Cociente de bases iguales (8 preguntas)
+  // ===== PROPERTY: producto de bases iguales =====
   for (let i = 0; i < 8; i++) {
-    const a = randomInt(2, 5);
-    const n = randomInt(3, 6);
-    const m = randomInt(1, n - 1);
-    const correct = Math.pow(a, n - m);
+    const a = randomInt(2, 7);
+    const n = randomInt(2, 5);
+    const m = randomInt(2, 5);
     pool.push({
-      tex: `\\frac{${a}^{${n}}}{${a}^{${m}}} = \\,?`,
-      correct,
-      explanation: `Bases iguales en división: se RESTAN los exponentes. \\frac{${a}^{${n}}}{${a}^{${m}}} = ${a}^{${n}-${m}} = ${a}^{${n - m}} = ${correct}.`,
-      generateOptions: () => {
-        const opts = new Set([correct, Math.pow(a, n + m), Math.pow(a, n) - Math.pow(a, m)]);
-        while (opts.size < 4) opts.add(Math.pow(a, randomInt(1, 6)));
-        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
-      },
+      type: 'property',
+      tex: `${a}^{${n}} \\cdot ${a}^{${m}} = \\,?`,
+      explanation: `Bases iguales: se SUMAN los exponentes. ${a}^{${n}} \\cdot ${a}^{${m}} = ${a}^{${n}+${m}} = ${a}^{${n + m}}.`,
+      generateOptions: propOptions(
+        `${a}^{${n}+${m}}`,
+        [
+          `${a}^{${n} \\cdot ${m}}`,
+          `${a}^{${n}-${m}}`,
+          `${a * a}^{${n}+${m}}`,
+        ]
+      ),
     });
   }
 
-  // Raíz de una raíz (7 preguntas)
+  // ===== PROPERTY: cociente de bases iguales =====
+  for (let i = 0; i < 8; i++) {
+    const a = randomInt(2, 6);
+    const n = randomInt(4, 7);
+    const m = randomInt(1, n - 1);
+    pool.push({
+      type: 'property',
+      tex: `\\dfrac{${a}^{${n}}}{${a}^{${m}}} = \\,?`,
+      explanation: `Bases iguales en división: se RESTAN los exponentes. \\dfrac{${a}^{${n}}}{${a}^{${m}}} = ${a}^{${n}-${m}} = ${a}^{${n - m}}.`,
+      generateOptions: propOptions(
+        `${a}^{${n}-${m}}`,
+        [
+          `${a}^{${n}/${m}}`,
+          `${a}^{${n}+${m}}`,
+          `${a}^{${m}-${n}}`,
+        ]
+      ),
+    });
+  }
+
+  // ===== PROPERTY: potencia de potencia =====
+  for (let i = 0; i < 6; i++) {
+    const a = randomInt(2, 6);
+    const n = randomInt(2, 4);
+    const m = randomInt(2, 4);
+    pool.push({
+      type: 'property',
+      tex: `(${a}^{${n}})^{${m}} = \\,?`,
+      explanation: `Potencia de potencia: los exponentes se MULTIPLICAN. (${a}^{${n}})^{${m}} = ${a}^{${n} \\cdot ${m}} = ${a}^{${n * m}}.`,
+      generateOptions: propOptions(
+        `${a}^{${n} \\cdot ${m}}`,
+        [
+          `${a}^{${n}+${m}}`,
+          `${a}^{${n}^{${m}}}`,
+          `${a}^{${n}} \\cdot ${m}`,
+        ]
+      ),
+    });
+  }
+
+  // ===== PROPERTY: potencia de un producto =====
   for (let i = 0; i < 7; i++) {
+    const a = randomInt(2, 6);
+    const b = randomInt(2, 6);
+    const n = randomInt(2, 4);
+    pool.push({
+      type: 'property',
+      tex: `(${a} \\cdot ${b})^{${n}} = \\,?`,
+      explanation: `La potencia se reparte entre los factores: (${a} \\cdot ${b})^{${n}} = ${a}^{${n}} \\cdot ${b}^{${n}}.`,
+      generateOptions: propOptions(
+        `${a}^{${n}} \\cdot ${b}^{${n}}`,
+        [
+          `${a}^{${n}} + ${b}^{${n}}`,
+          `(${a}+${b})^{${n}}`,
+          `${a} \\cdot ${b}^{${n}}`,
+        ]
+      ),
+    });
+  }
+
+  // ===== PROPERTY: raíz de un producto =====
+  for (let i = 0; i < 5; i++) {
+    const a = perfs[randomInt(0, perfs.length - 1)];
+    const b = perfs[randomInt(0, perfs.length - 1)];
+    pool.push({
+      type: 'property',
+      tex: `\\sqrt{${a} \\cdot ${b}} = \\,?`,
+      explanation: `La raíz del producto es el producto de las raíces: \\sqrt{${a} \\cdot ${b}} = \\sqrt{${a}} \\cdot \\sqrt{${b}}.`,
+      generateOptions: propOptions(
+        `\\sqrt{${a}} \\cdot \\sqrt{${b}}`,
+        [
+          `\\sqrt{${a}} + \\sqrt{${b}}`,
+          `\\sqrt{${a} + ${b}}`,
+          `${a} \\cdot ${b}`,
+        ]
+      ),
+    });
+  }
+
+  // ===== PROPERTY: raíz de una raíz =====
+  for (let i = 0; i < 5; i++) {
     const base = randomInt(2, 3);
     const n = 2;
     const m = randomInt(2, 3);
     const a = Math.pow(base, n * m);
     pool.push({
+      type: 'property',
       tex: `\\sqrt[${n}]{\\sqrt[${m}]{${a}}} = \\,?`,
-      correct: base,
-      explanation: `Raíz de raíz: los índices se MULTIPLICAN. \\sqrt[${n}]{\\sqrt[${m}]{${a}}} = \\sqrt[${n * m}]{${a}} = ${base}, porque ${base}^{${n * m}} = ${a}.`,
-      generateOptions: () => {
-        const opts = new Set([base, base + 1, Math.max(1, base - 1), base * 2]);
-        while (opts.size < 4) opts.add(randomInt(1, 8));
-        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
-      },
+      explanation: `Raíz de raíz: los índices se MULTIPLICAN. \\sqrt[${n}]{\\sqrt[${m}]{${a}}} = \\sqrt[${n} \\cdot ${m}]{${a}} = \\sqrt[${n * m}]{${a}}.`,
+      generateOptions: propOptions(
+        `\\sqrt[${n * m}]{${a}}`,
+        [
+          `\\sqrt[${n + m}]{${a}}`,
+          `\\sqrt{${a}}`,
+          `\\sqrt[${n}]{${a}}`,
+        ]
+      ),
     });
   }
 
-  // Potencia de un producto (7 preguntas)
-  for (let i = 0; i < 7; i++) {
-    const a = randomInt(2, 5);
-    const b = randomInt(2, 5);
-    const n = randomInt(2, 3);
-    const correct = Math.pow(a * b, n);
-    pool.push({
-      tex: `(${a} \\cdot ${b})^{${n}} = \\,?`,
-      correct,
-      explanation: `La potencia se reparte entre los factores: (${a} \\cdot ${b})^{${n}} = ${a}^{${n}} \\cdot ${b}^{${n}} = ${Math.pow(a, n)} \\cdot ${Math.pow(b, n)} = ${correct}.`,
-      generateOptions: () => {
-        const opts = new Set([correct, Math.pow(a, n) + Math.pow(b, n), a * b * n, (a + b) * n]);
-        while (opts.size < 4) opts.add(Math.pow(a * b, randomInt(1, 3)));
-        return shuffleArray([...opts].filter(x => x > 0).slice(0, 4));
-      },
-    });
-  }
-
-  // Raíz como potencia fraccionaria (8 preguntas)
-  for (let i = 0; i < 8; i++) {
+  // ===== PROPERTY: raíz como potencia fraccionaria =====
+  for (let i = 0; i < 6; i++) {
     const base = randomInt(2, 3);
     const n = randomInt(2, 3);
     const m = randomInt(2, 3);
     const a = Math.pow(base, n);
-    const correct = Math.pow(base, m);
     pool.push({
+      type: 'property',
       tex: `\\sqrt[${n}]{${a}^{${m}}} = \\,?`,
-      correct,
-      explanation: `Raíz como potencia fraccionaria: \\sqrt[${n}]{${a}^{${m}}} = ${a}^{\\frac{${m}}{${n}}}. Como ${a} = ${base}^{${n}}, queda ${base}^{${m}} = ${correct}.`,
-      generateOptions: () => {
-        const opts = new Set([correct, Math.pow(base, n + m), a * m, Math.pow(base, Math.abs(m - n) || 1)]);
-        while (opts.size < 4) opts.add(Math.pow(base, randomInt(1, 5)));
-        return shuffleArray([...opts].filter(x => x > 0 && Number.isFinite(x)).slice(0, 4));
-      },
+      explanation: `Raíz como potencia fraccionaria: el exponente del radicando va en el NUMERADOR, el índice en el DENOMINADOR. \\sqrt[${n}]{${a}^{${m}}} = ${a}^{\\frac{${m}}{${n}}}.`,
+      generateOptions: propOptions(
+        `${a}^{\\frac{${m}}{${n}}}`,
+        [
+          `${a}^{\\frac{${n}}{${m}}}`,
+          `${a}^{${m}+${n}}`,
+          `${a}^{${m}-${n}}`,
+        ]
+      ),
     });
   }
 
@@ -688,22 +754,26 @@ function renderQuestion() {
   const options = q.generateOptions();
   options.forEach(opt => {
     const btn = document.createElement('button');
-    btn.className = 'quiz-option';
-    btn.textContent = fmt(opt);
-    btn.dataset.value = opt;
-    btn.addEventListener('click', () => handleAnswer(btn, opt, q.correct, q.explanation));
+    btn.className = 'quiz-option' + (q.type === 'property' ? ' quiz-option-latex' : '');
+    btn.dataset.correct = opt.isCorrect ? 'true' : 'false';
+
+    if (q.type === 'property') {
+      btn.innerHTML = tex(opt.tex, true);
+    } else {
+      btn.textContent = opt.label;
+    }
+
+    btn.addEventListener('click', () => handleAnswer(btn, opt.isCorrect, q));
     quizEl.options.appendChild(btn);
   });
 }
 
-function handleAnswer(btn, value, correct, explanation) {
+function handleAnswer(btn, isRight, q) {
   if (quizState.locked) return;
   quizState.locked = true;
 
   const buttons = quizEl.options.querySelectorAll('.quiz-option');
   buttons.forEach(b => { b.disabled = true; });
-
-  const isRight = value === correct;
 
   if (isRight) {
     btn.classList.add('correct');
@@ -713,15 +783,17 @@ function handleAnswer(btn, value, correct, explanation) {
   } else {
     btn.classList.add('wrong');
     buttons.forEach(b => {
-      if (Number(b.dataset.value) === correct) b.classList.add('correct');
+      if (b.dataset.correct === 'true') b.classList.add('correct');
     });
-    quizEl.feedback.textContent = `La respuesta era ${fmt(correct)}`;
+    quizEl.feedback.textContent = q.type === 'property'
+      ? 'Uh, no es ese paso. Mirá el correcto:'
+      : 'No era ese valor. Mirá la explicación:';
     quizEl.feedback.classList.add('negative');
   }
 
   quizEl.explanation.innerHTML = `
     <div class="quiz-explanation-label">${isRight ? '✨ Dato' : '📚 Explicación'}</div>
-    <div class="quiz-explanation-body">${tex(explanation, false)}</div>
+    <div class="quiz-explanation-body">${tex(q.explanation, true)}</div>
   `;
   quizEl.explanation.hidden = false;
 
