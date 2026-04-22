@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Aprendé raíces cuadradas y propiedades de potencias jugando" />
+  <title>Raíces · Mariana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-symbol">√</span>
+      <h1>Raíces</h1>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="flashcards" role="tab">Flashcards</button>
+      <button class="tab" data-tab="propiedades" role="tab">Propiedades</button>
+      <button class="tab" data-tab="quiz" role="tab">Quiz</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ FLASHCARDS ============ -->
+    <section id="flashcards" class="view active">
+      <div class="view-head">
+        <h2>Memorizá las raíces</h2>
+        <p class="subtitle">De √1 a √400. Tocá la carta para ver el resultado.</p>
+      </div>
+
+      <div class="flashcard-controls">
+        <div class="mode-switch">
+          <button class="mode-btn active" data-mode="secuencial">Secuencial</button>
+          <button class="mode-btn" data-mode="aleatorio">Aleatorio</button>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
+          <span class="progress-label" id="fc-progress-label">1 / 20</span>
+        </div>
+      </div>
+
+      <div class="flashcard-stage">
+        <div class="flashcard" id="flashcard">
+          <div class="card-face card-front">
+            <div class="radical">
+              <span class="radical-sign">√</span>
+              <span class="radical-number" id="fc-number">1</span>
+            </div>
+            <p class="card-hint">Tocá para ver la respuesta</p>
+          </div>
+          <div class="card-face card-back">
+            <div class="answer" id="fc-answer">1</div>
+            <p class="card-hint">¿La sabías?</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flashcard-actions">
+        <button class="btn btn-secondary" id="fc-prev">← Anterior</button>
+        <button class="btn btn-danger" id="fc-wrong" hidden>No la sabía</button>
+        <button class="btn btn-success" id="fc-right" hidden>¡La sabía!</button>
+        <button class="btn btn-primary" id="fc-next">Siguiente →</button>
+      </div>
+
+      <div class="stats" id="fc-stats">
+        <div class="stat"><span class="stat-value" id="fc-stat-right">0</span><span class="stat-label">Sabidas</span></div>
+        <div class="stat"><span class="stat-value" id="fc-stat-wrong">0</span><span class="stat-label">Por repasar</span></div>
+        <button class="btn btn-ghost" id="fc-reset">Reiniciar</button>
+      </div>
+    </section>
+
+    <!-- ============ PROPIEDADES ============ -->
+    <section id="propiedades" class="view">
+      <div class="view-head">
+        <h2>Propiedades de potencias y raíces</h2>
+        <p class="subtitle">Cambiá los números y mirá cómo se cumple cada regla.</p>
+      </div>
+
+      <div class="props-grid" id="props-grid"></div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz" class="view">
+      <div class="view-head">
+        <h2>Quiz rápido</h2>
+        <p class="subtitle">10 preguntas. Feedback al instante.</p>
+      </div>
+
+      <div id="quiz-start" class="quiz-start">
+        <div class="quiz-intro">
+          <span class="quiz-emoji">🎯</span>
+          <h3>¿Lista para el desafío?</h3>
+          <p>Mezcla de raíces cuadradas y propiedades. Elegí la opción correcta.</p>
+          <button class="btn btn-primary btn-lg" id="quiz-begin">Empezar</button>
+        </div>
+      </div>
+
+      <div id="quiz-play" class="quiz-play" hidden>
+        <div class="quiz-header">
+          <span class="quiz-counter" id="quiz-counter">Pregunta 1 / 10</span>
+          <div class="progress-bar"><div class="progress-fill" id="quiz-progress"></div></div>
+        </div>
+        <div class="quiz-question" id="quiz-question"></div>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-feedback" id="quiz-feedback"></div>
+      </div>
+
+      <div id="quiz-end" class="quiz-end" hidden>
+        <div class="quiz-result">
+          <span class="quiz-emoji" id="quiz-end-emoji">🎉</span>
+          <h3 id="quiz-end-title">¡Terminaste!</h3>
+          <p class="quiz-score"><span id="quiz-final-score">0</span> / 10</p>
+          <p class="quiz-msg" id="quiz-end-msg"></p>
+          <button class="btn btn-primary" id="quiz-restart">Jugar de nuevo</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <footer class="app-footer">
+    <p>Hecho con amor para Mariana · <span class="heart">💜</span></p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
